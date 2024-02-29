@@ -1,80 +1,56 @@
 import openai
-import tiktoken
-from colorama import Fore
 from dotenv import load_dotenv
+from colorama import Fore
 
 
-# Load the environment variables - set up the OpenAI API client
+# Constants
+MODEL_ENGINE = "gpt-3.5-turbo"
+MESSAGE_SYSTEM = "You are a helpful assistant"
+messages = [{"role": "system", "content": MESSAGE_SYSTEM}]
+
 load_dotenv()
 client = openai.OpenAI()
 
-# Set up the model and prompt
-LANGUAGE_MODEL = "gpt-3.5-turbo-instruct"
-PROMPT_TEST = "This is a test prompt. Say this is a test"
+
+def generate_chat_completion(user_input=""):
+    pass
 
 
-def get_tokens(user_input: str) -> int:
-    """Returns the number of tokens in a text string."""
-
-    encoding = tiktoken.get_encoding("cl100k_base")
-
-    token_integers = encoding.encode(user_input)
-    tokens_usage = len(token_integers)
-
-    tokenized_input = tokenized_input = list(
-        map(
-            lambda x: encoding.decode_single_token_bytes(x).decode("utf-8"),
-            encoding.encode(user_input),
-        )
-    )
-    print(f"{encoding}: {tokens_usage} tokens")
-    print(f"token integers: {tokens_usage}")
-    print(f"token bytes: {tokenized_input}")
-
-
-def start():
-    print("MENU")
-    print("====")
-    print("[1]- Ask a question")
-    print("[2]- Exit")
-    choice = input("Enter your choice: ")
-    if choice == "1":
-        ask()
-    elif choice == "2":
-        exit()
-    else:
-        print("Invalid choice")
+def main():
+    while True:
+        print("\n")
+        print("----------------------------------------\n")
+        print(" *** 🤖 WELCOME TO THE AI-CHATBOT *** ")
+        print("\n----------------------------------------")
+        print("\n================* MENU *================\n")
+        print("[1]- Start Chat")
+        print("[2]- Exit")
+        choice = input("Enter your choice: ")
+        if choice == "1":
+            start_chat()
+        elif choice == "2":
+            exit()
+        else:
+            print("Invalid choice")
 
 
-def ask():
-    """Ask a question and get a response from the model."""
-    instructions = (
-        "Type your question and press ENTER. Type 'x' to go back to the MAIN menu.\n"
-    )
-    print(Fore.BLUE + "\n\x1B[3m" + instructions + "\x1B[0m" + Fore.RESET)
+def start_chat():
+    print("to end chat, type 'x'")
+    print("\n")
+    print("      NEW CHAT       ")
+    print("---------------------")
+    generate_chat_completion()
 
     while True:
-        user_input = input("Q: ")
+        user_input = input(Fore.WHITE + "You: ")
 
-        # Exit
-        if user_input == "x":
-            start()
+        if user_input.lower() == "x":
+            main()
+            break
         else:
-            completion = client.completions.create(
-                model="gpt-3.5-turbo-instruct",
-                prompt=str(user_input),
-                max_tokens=100,
-                temperature=0,
-            )
-
-            response = completion.choices[0].text.replace
-            ("\n", "").replace("\r", "")
-
-            get_tokens(response)
-
-            print(Fore.BLUE + f"A: {response}" + Fore.RESET)
-            print(Fore.WHITE + "\n-------------------------------------------------")
+            pass
+            # generate
 
 
 if __name__ == "__main__":
-    start()
+    main()
