@@ -1,59 +1,50 @@
-import streamlit as st
-import tempfile
 import openai
 import os
+import json
+import requests
+from colorama import Fore
 from dotenv import load_dotenv
-from utils import speech_to_text, speech_to_translation, save_file
 
-# Load environment variables
+
 load_dotenv()
 
-# Set OpenAI API key
-openai.api_key = os.getenv("OPENAI_API_KEY")
+# Constants
+MODEL_ENGINE = "gpt-3.5-turbo"
+messages = [{"role": "system", "content": "You are a helpful assistant"}]
 
-# Streamlit App
-st.title("Audio transcriptions & translations")  # Add a title
+client = openai.OpenAI()
 
-# Custom style for blue button
-st.markdown(
-    """
-    <style>
-        .stButton>button {
-            background-color: transparent;
-            border: 1px solid #3498db;
-            float: right;
-        }
-    </style>
-    """,
-    unsafe_allow_html=True,
-)
 
-# User input
-with st.form("user_form", clear_on_submit=True):
-    uploaded_file = st.file_uploader("Choose a file")
-    submit_button = st.form_submit_button(label="Submit")
+def generate_response(user_input):
+    messages.append({"role": "user", "content": user_input})
+    response = client.chat.completions.create(
+        model="gpt-3.5-turbo",
+        messages=messages
+    )
+    messages.append(response.choices[0].message)
+    return response.choices[0].message
 
-# Process the uploaded file
 
-if submit_button and uploaded_file is not None:
-    with st.spinner("Transcribing..."):
-        # Save the uploaded file to a temporary file
-        with tempfile.NamedTemporaryFile(
-            delete=False, suffix=os.path.splitext(uploaded_file.name)[1]
-        ) as temp_file:
-            temp_file.write(uploaded_file.getvalue())
-            temp_file_path = temp_file.name
-            filename = temp_file_path.split("/")[-1]
-            original_transcript = speech_to_text(temp_file_path)
-            translated_transcript = speech_to_translation(temp_file_path)
-            save_file(original_transcript, f"transcriptions/{uploaded_file.name}.txt")
-            save_file(
-                translated_transcript,
-                f"transcriptions/{uploaded_file.name}_translated.txt",
-            )
-            st.success("File transcribed successfully!")
-            st.divider()
-            st.markdown(f":blue `{original_transcript}`")
-            st.divider()
-            st.markdown(f":green `{translated_transcript}`")
-            st.audio(temp_file_path)
+def main():
+    print(Fore.CYAN + "Bot: Hello, I am a helpful assistant. Type 'exit' to quit." + Fore.RESET)
+
+    while True:
+        user_input = input("You: ")
+
+        if user_input == "exit":
+            print("Goodbye!")
+            break
+
+        # Step 1: send the conversation and available functions to GPT
+        message_response = generate_response(user_input)
+        print(Fore.CYAN + "Bot: " + message_response.content + Fore.RESET)
+
+        # Step 2: check if GPT wanted to call a function and generate an extended response
+
+        # Step 3: call the function
+        # Step 4: send the info on the function call and function response to GPT
+        # extend conversation with assistant's reply
+
+
+if __name__ == "__main__":
+    main()
