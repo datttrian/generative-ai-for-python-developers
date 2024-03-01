@@ -22,7 +22,7 @@ tools = [
                     },
                     "unit": {"type": "string", "enum": ["celsius", "fahrenheit"]},
                 },
-                "required": ["location"],
+                "required": ["location", "unit"],
             },
         },
     }
@@ -106,6 +106,11 @@ def main():
 
         # Step 4: send the info on the function call and function response to GPT
         # extend conversation with assistant's reply
+        second_response = client.chat.completions.create(
+            model="gpt-3.5-turbo-1106",
+            messages=messages,
+        )  # get a new response from the model where it can see the function response
+        print("Bot: " + second_response.choices[0].message.content)
 
 
 if __name__ == "__main__":
