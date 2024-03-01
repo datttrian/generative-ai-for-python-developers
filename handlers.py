@@ -23,7 +23,7 @@ def print_messages(messages):
     messages = [message for message in messages if message["role"] != "system"]
     for message in messages:
         role = "Bot" if message["role"] == "assistant" else "You"
-        print(Fore.BLUE + role + ": " + message["role"])
+        print(Fore.BLUE + role + ": " + message["content"])
     return messages
 
 
@@ -33,4 +33,7 @@ def generate_chat_completion(user_input=""):
         model="gpt-3.5-turbo",
         messages=messages,
     )
-    print(completion)
+    message = completion.choices[0].message
+    messages.append(to_dict(message))
+    print_messages(messages)
+    return message.content
