@@ -9,12 +9,14 @@ from dotenv import load_dotenv
 # Specify the folder path
 folder_path = "media"
 
+
 load_dotenv()
 client = openai.OpenAI()
 
 
 def downloadFile(user_input, url):
-    """Download a file from a URL"""
+    """Download a file from a URL and save it to the media folder"""
+
     try:
         # It's recommended to verify SSL certificates
         ssl._create_default_https_context = ssl._create_unverified_context
@@ -35,7 +37,8 @@ def downloadFile(user_input, url):
 
 
 def get_files():
-    """Get all image files in the folder"""
+    """Get all image files in the media folder"""
+
     # List all files in the folder
     files = os.listdir(folder_path)
     images = []
@@ -51,5 +54,13 @@ def get_files():
 
 
 def generate_image(user_input="a white siamese cat"):
-    """Generate an image based on the user input"""
-    pass
+    """Generate an image from a text prompt"""
+    response = client.images.generate(
+        model="dall-e-3",
+        prompt=user_input,
+        size="1024x1024",
+        quality="standard",
+        n=1,
+    )
+
+    return response.data[0].url
