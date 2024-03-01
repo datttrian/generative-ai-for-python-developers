@@ -38,3 +38,20 @@ def speech_to_text(audio_path="media/audio.mp3"):
 
     except Exception as e:
         print(f"An error occurred during transcription: {e}")
+
+
+def speech_to_translation(audio_path="media/audio.mp3"):
+    try:
+        if not os.path.exists(audio_path):
+            raise FileNotFoundError("File not found")
+
+        # Initialize the Whisper ASR model
+        model = whisper.load_model("base")
+
+        # Your code to transcribe the audio
+        result = model.transcribe(audio_path, language="en")
+
+        # Extract the transcript text from the result
+        return result["text"]
+    except Exception as e:
+        print(f"An error occurred during transcription: {e}")
