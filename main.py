@@ -1,116 +1,52 @@
-import openai
-import json
-from colorama import Fore
+import os
 from dotenv import load_dotenv
-from utils import get_current_weather
+from langchain.chat_models import ChatOpenAI
+from langchain.prompts import ChatPromptTemplate
 
+from langchain.prompts.chat import (
+    HumanMessagePromptTemplate,
+    SystemMessagePromptTemplate,
+)
+from langchain.schema import StrOutputParser
 
 load_dotenv()
 
-tools = [
-    {
-        "type": "function",
-        "function": {
-            "name": "get_current_weather",
-            "description": "Get the current weather in a given location",
-            "parameters": {
-                "type": "object",
-                "properties": {
-                    "location": {
-                        "type": "string",
-                        "description": "The city and state, e.g. San Francisco, CA",
-                    },
-                    "unit": {"type": "string", "enum": ["celsius", "fahrenheit"]},
-                },
-                "required": ["location", "unit"],
-            },
-        },
-    }
-]
 
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+LANGUAGE_MODEL = "gpt-3.5-turbo-instruct"
 
-# Constants
-MODEL_ENGINE = "gpt-3.5-turbo"
-messages = [{"role": "system", "content": "You are a helpful assistant"}]
+system_prompt = "You are a helpful assistant that answers generals inquiries and assist with technical issues"
 
-client = openai.OpenAI()
+str_parser = StrOutputParser()
 
+# basic example of how to get started with the OpenAI Chat models
+# The above cell assumes that your OpenAI API key is set in your environment variables.
+model = ChatOpenAI(model_name="gpt-3.5-turbo", temperature=0.3)
 
-def generate_response(user_input):
-    messages.append({"role": "user", "content": user_input})
-    response = client.chat.completions.create(
-        model="gpt-3.5-turbo-1106",
-        messages=messages,
-        tools=tools,
-        tool_choice="auto",  # auto is default, but we'll be explicit
-    )
-    messages.append(
-        response.choices[0].message
-    )  # extend conversation with assistant's reply
-    return response.choices[0].message
-
-
-available_functions = {
-    "get_current_weather": get_current_weather,
-}  # only one function in this example, but you can have multiple
-
-
-def call_function(tool_calls):
-    if tool_calls:
-        # Step 4: send the info for each function call and function response to the model
-        for tool_call in tool_calls:
-            function_name = tool_call.function.name
-            function_to_call = available_functions[function_name]
-            function_args = json.loads(tool_call.function.arguments)
-            function_response = function_to_call(
-                location=function_args.get("location"),
-                unit=function_args.get("unit"),
-            )
-
-            print(function_response)
-            messages.append(
-                {
-                    "tool_call_id": tool_call.id,
-                    "role": "tool",
-                    "name": function_name,
-                    "content": function_response,
-                }
-            )  # extend conversation with function response
+system_message_prompt = SystemMessagePromptTemplate.from_template(system_prompt)
+human_message_prompt = HumanMessagePromptTemplate.from_template("{question}")
+chat_prompt = ChatPromptTemplate.from_messages(
+    [system_message_prompt, human_message_prompt]
+)
 
 
 def main():
-    print(
-        Fore.CYAN
-        + "Bot: Hello, I am a helpful assistant. Type 'exit' to quit."
-        + Fore.RESET
-    )
+    user_input = "I want to return a pair of shoes"
 
-    while True:
-        user_input = input("You: ")
+    # prompt value
+    prompt_value = chat_prompt.invoke({"question": user_input})
+    # print(prompt_value.to_string())
 
-        if user_input == "exit":
-            print("Goodbye!")
-            break
+    # model response
+    messages = chat_prompt.format_prompt(question=user_input).to_messages()
+    response = model.invoke(messages)
+    print(response)
 
-        # Step 1: send the conversation and available functions to GPT
-        message_response = generate_response(user_input)
-        print(message_response)
+    # string output parser
+    content = str_parser.invoke(response)
+    print(content)
 
-        # Step 2: check if GPT wanted to call a function and generate an extended response
-        if message_response.tool_calls is None:
-            print("Bot: " + message_response.content)
-            continue
-
-        # Step 3: call the function
-        call_function(message_response.tool_calls)
-
-        # Step 4: send the info on the function call and function response to GPT
-        # extend conversation with assistant's reply
-        second_response = client.chat.completions.create(
-            model="gpt-3.5-turbo-1106",
-            messages=messages,
-        )  # get a new response from the model where it can see the function response
-        print("Bot: " + second_response.choices[0].message.content)
+    # LCEL makes it easy to build complex chains from basic components, and supports out of the box functionality such as streaming, parallelism, and logging.
 
 
 if __name__ == "__main__":
