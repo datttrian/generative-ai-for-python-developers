@@ -1,2 +1,4 @@
 pip install openai tiktoken python-dotenv
 python main.py
+sudo apt update
+sudo apt install ffmpeg
